@@ -94,7 +94,7 @@ function alias() {
 					for (var sc=0; sc < a.sources.length; sc++) {
 						var sourceFunction = a.sourceScope[a.sources[sc]];
 						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
-							a.sources[sc] = '___'+a.sources[sc]+'___'
+							a.sources[sc] = '___'+a.sources[sc]+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
 							a.sourceScope[a.sources[sc]] = sourceFunction;
 						}
 					};

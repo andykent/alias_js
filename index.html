@@ -23,8 +23,6 @@
   .delayBy(1000)
 
   c('hello from c');
-  d('hello from d');
-  e('hello from e');
 
   // You can build multi-step function chains and even define the chain before defining the source function, great for meta-programming.
   alias('demo').as('demo1');
@@ -56,8 +54,10 @@
   function myHaltingBeforeFilter() { console.log("I halted the filter chain"); throw('halt') };  
   alias('demo').withScope(myLib).beforeEach(myBeforeFilter).as('demo');
   alias('demo').withScope(myLib).beforeAll(myHaltingBeforeFilter).as('demo2');
-  myLib.demo()
-  myLib.demo2()
+  myLib.demo();
+  myLib.demo2();
+  alias('demo').withScope(myLib).beforeEach(myBeforeFilter).as('demo');
+  myLib.demo();
   </script>
 
 </head>
