@@ -1,7 +1,7 @@
 // An advanced aliasing method. Some examples.
 // alias('a').as('b'); 
 // -> calls to b() are redirected to a()
-// alias('a', 'b', 'c').as('x').; 
+// alias('a', 'b', 'c').as('x'); 
 // -> calls to x() will call a(), b(), c() in order
 // alias('a').withSourceScope(window).as('b'); 
 // -> calls to window.b() get routed to a() in the current scope
@@ -47,26 +47,26 @@ function alias() {
 		},
 
 		apply: function() {
-			var fun = this;
+			var a = this;
 			var applyToDestination = function(dest) {
-				fun.destinationScope[dest] = function() {
-					if (fun.includeFunctionName) {
+				a.destinationScope[dest] = function() {
+					if (a.includeFunctionName) {
 						var args = [dest];
 						for (var arg=0; arg < arguments.length; arg++) {
 							args.push(arguments[arg]);
 						};
 					} else var args = arguments;
 					var execute = function() {
-						for (var sc=0; sc < fun.sources.length; sc++) {
-							fun.sourceScope[fun.sources[sc]].apply(fun.sourceScope, args);
+						for (var sc=0; sc < a.sources.length; sc++) {
+							a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
 						};
 					};
-					fun.delayPeriod ? setTimeout(execute, fun.delayPeriod) : execute();
+					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
 				};
 			};
 
-			for (var d=0; d < fun.destinations.length; d++) {
-				applyToDestination(fun.destinations[d]);
+			for (var d=0; d < a.destinations.length; d++) {
+				applyToDestination(a.destinations[d]);
 			};
 			return this;
 		}

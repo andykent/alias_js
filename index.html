@@ -1,31 +1,56 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-	<title>index</title>
-	
-	<script src="alias.js" type="text/javascript" charset="utf-8"></script>
-	<script type="text/javascript" charset="utf-8">
-	 
-   var d = {
-	   a: function() { console.log('hello from a') },
-	   b: function(func, msg) { console.log(msg+' - was sent from '+func) }
-   };
-	 
-	 alias('a', 'b')
-    .withSourceScope(d)
-	  .as('c', 'd', 'e')
-    .withNamedCaller()
-    .delayBy(1000)
-	 
-   c('hello from c');
-   d('hello from d');
-   e('hello from e');
-	</script>
-	
+  <title>index</title>
+
+  <script src="alias.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" charset="utf-8">
+
+  // Time delays, scoping and chained dispatch are all fully supported.
+  var d = {
+    a: function() { console.log('hello from a') },
+    b: function(func, msg) { console.log(msg+' - was sent from '+func) }
+  };
+
+  alias('a', 'b')
+  .withSourceScope(d)
+  .as('c', 'd', 'e')
+  .withNamedCaller()
+  .delayBy(1000)
+
+  c('hello from c');
+  d('hello from d');
+  e('hello from e');
+
+  // You can build multi-step function chains and even define the chain before defining the source function, great for meta-programming.
+  alias('demo').as('demo1');
+  alias('demo1').as('demo2');
+  alias('demo2').as('demo3');
+
+  function demo() { console.log('hello from demo') };
+
+  demo3();
+  
+  // As aliases are evaluated on the fly you can define new ones at runtime. 
+  // This is a very contrived example but it can be useful for defering and caching conditional logic.
+  function login(name, password) {
+    if(password=='secrets')
+      alias('authenticated').as('login');
+    else
+      alias('blocked').as('login');
+    return login(name, password);
+  };
+  function authenticated(name,_) { console.log(name+' was allowed in'); return true; };
+  function blocked(name,_) { console.log(name+' was blocked'); return false };
+  
+  login('mary', 'secrets');
+  
+  </script>
+
 </head>
 
 <body>
