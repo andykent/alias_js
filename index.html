@@ -87,6 +87,20 @@
     .as('demo');
   
   myLib.demo();
+  
+  
+  
+  // filters can even modify the arguments that are being passed in by returning an array. 
+  // if you don't wish to modify the arguments then simply don't return anything.
+  
+  function base(a, b) { console.log('Base received a='+a+' b='+b) };
+  function modifyFilter(a, b) { return [a+1, b*10] };
+  alias('base')
+    .beforeEach(modifyFilter)
+    .as('base');
+    
+  base(1, 5);
+   
   </script>
 
 </head>

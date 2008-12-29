@@ -10,7 +10,7 @@
 // alias('a').as('b').delayBy(1000); 
 // -> calls to b() are redirected to a() after a 1 second delay
 // alias('a').withScope(myLib).beforeEach(myBeforeFilter).as('a');
-// -> calls to a will be passed to the now moved original function '___a___()' but a filter will be run before each invocation
+// -> calls will be passed to the original function but a filter will be run before each invocation
 
 function alias() {
 	var scope = this;
@@ -74,16 +74,18 @@ function alias() {
 		},
 		
 		runFilters: function(filters, scope, args) {
-			var retVal = true;
 			for(var f=0; f < filters.length; f++) {
 				try {
-					filters[f].apply(scope, args);
+					var retVal = filters[f].apply(scope, args);
+					args = retVal || args;
 				} catch(e) {
-					if(e=='halt') retVal = false; 
-					else throw(e);
+					if(e=='halt') {
+						args = false; 
+						break;
+					} else throw(e);
 				}
 			};
-			return retVal;
+			return args;
 		},
 
 		apply: function() {
@@ -108,13 +110,13 @@ function alias() {
 					} else var args = arguments;
 					
 					var execute = function() {
-						if(!a.runFilters(a.beforeAllFilters, a.sourceScope, args)) return;
+						if(!(args = a.runFilters(a.beforeAllFilters, a.sourceScope, args))) return;
 						for (var sc=0; sc < a.sources.length; sc++) {
-							if(!a.runFilters(a.beforeEachFilters, a.sourceScope, args)) return;
+							if(!(args = a.runFilters(a.beforeEachFilters, a.sourceScope, args))) return;
 							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
-							if(!a.runFilters(a.afterEachFilters, a.sourceScope, args)) return;
+							if(!(args = a.runFilters(a.afterEachFilters, a.sourceScope, args))) return;
 						};
-						if(!a.runFilters(a.afterAllFilters, a.sourceScope, args)) return;
+						if(!(args = a.runFilters(a.afterAllFilters, a.sourceScope, args))) return;
 						return retVal;
 					};
 					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
@@ -132,9 +134,8 @@ function alias() {
 };
 
 // TODO
-// - allow objects to be passed in as well as strings to withScope(), alias() & as()
-// - allow before filters to modify the incoming arguments somehow
-// - allow after filters to modify the return value somehow
+// - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
+// - allow after filters to modify the return value somehow instead of modifying the arguments as that is a bit pointless
 // - add a revert() method to revert back to the non aliased version, involves tracking function creations and renames
 // - add a once() method to automatically revert() after the first invocation of a function is complete
 // - add beforeFirst() and afterFirst() to support filters on the first invocation of a function
