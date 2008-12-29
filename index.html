@@ -36,18 +36,18 @@
   demo3();
   
   // As aliases are evaluated on the fly you can define new ones at runtime. 
-  // This is a very contrived example but it can be useful for defering and caching conditional logic.
-  function login(name, password) {
+  // This is a very contrived example but it can be useful for defering and/or caching conditional logic.
+  function login(password) {
     if(password=='secrets')
       alias('authenticated').as('login');
     else
       alias('blocked').as('login');
-    return login(name, password);
+    return login(password);
   };
-  function authenticated(name,_) { console.log(name+' was allowed in'); return true; };
-  function blocked(name,_) { console.log(name+' was blocked'); return false };
+  function authenticated(password) { console.log('Password "'+password+'" accepted, user is logged in'); return true; };
+  function blocked(password) { console.log('Password "'+password+'" invalid, user is blocked'); return false };
   
-  login('mary', 'secrets');
+  login('secrets');
   
   </script>
 

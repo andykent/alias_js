@@ -9,6 +9,9 @@
 // -> calls to b(args) are redirected to a('b', args), useful for method missing like functionality
 // alias('a').as('b').delayBy(1000); 
 // -> calls to b() are redirected to a() after a 1 second delay
+
+// It's important to note that this is 100% pure by the book JavaScript with no evil hacks that could end up biting you.
+// also functions are created and cached when defined so most aliases will be little more than an additional call to Function.apply();
 function alias() {
 	var scope = this;
 	var Alias = function(sources) {
