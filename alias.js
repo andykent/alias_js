@@ -9,9 +9,9 @@
 // -> calls to b(args) are redirected to a('b', args), useful for method missing like functionality
 // alias('a').as('b').delayBy(1000); 
 // -> calls to b() are redirected to a() after a 1 second delay
+// alias('a').withScope(myLib).beforeEach(myBeforeFilter).as('a');
+// -> calls to a will be passed to the now moved original function '___a___()' but a filter will be run before each invocation
 
-// It's important to note that this is 100% pure by the book JavaScript with no evil hacks that could end up biting you.
-// also functions are created and cached when defined so most aliases will be little more than an additional call to Function.apply();
 function alias() {
 	var scope = this;
 	var Alias = function(sources) {
@@ -26,6 +26,10 @@ function alias() {
 		destinations: [],
 		includeFunctionName: false,
 		delayPeriod: 0,
+		beforeEachFilters: [],
+		afterEachFilters: [],
+		beforeAllFilters: [],
+		afterAllFilters: [],
 
 		as: function() {
 			this.destinations = arguments;
@@ -48,10 +52,53 @@ function alias() {
 			this.delayPeriod = time;
 			return this;
 		},
+		
+		beforeEach: function(func) {
+			this.beforeEachFilters.push(func);
+			return this;
+		},
+		
+		afterEach: function(func) {
+			this.afterEachFilters.push(func);
+			return this;
+		},
+		
+		beforeAll: function(func) {
+			this.beforeAllFilters.push(func);
+			return this;
+		},
+		
+		afterAll: function(func) {
+			this.afterAllFilters.push(func);
+			return this;
+		},
+		
+		runFilters: function(filters, scope, args) {
+			var retVal = true;
+			for(var f=0; f < filters.length; f++) {
+				try {
+					filters[f].apply(scope, args);
+				} catch(e) {
+					if(e=='halt') retVal = false; 
+					else throw(e);
+				}
+			};
+			return retVal;
+		},
 
 		apply: function() {
 			var a = this;
 			var applyToDestination = function(dest) {
+				var destinationFunction = a.destinationScope[dest]
+				if(destinationFunction) { // we are about to do an overwrite so check for infinate loops!
+					for (var sc=0; sc < a.sources.length; sc++) {
+						var sourceFunction = a.sourceScope[a.sources[sc]];
+						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
+							a.sources[sc] = '___'+a.sources[sc]+'___'
+							a.sourceScope[a.sources[sc]] = sourceFunction;
+						}
+					};
+				};
 				a.destinationScope[dest] = function() {
 					if (a.includeFunctionName) {
 						var args = [dest];
@@ -59,10 +106,16 @@ function alias() {
 							args.push(arguments[arg]);
 						};
 					} else var args = arguments;
+					
 					var execute = function() {
+						if(!a.runFilters(a.beforeAllFilters, a.sourceScope, args)) return;
 						for (var sc=0; sc < a.sources.length; sc++) {
-							a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
+							if(!a.runFilters(a.beforeEachFilters, a.sourceScope, args)) return;
+							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
+							if(!a.runFilters(a.afterEachFilters, a.sourceScope, args)) return;
 						};
+						if(!a.runFilters(a.afterAllFilters, a.sourceScope, args)) return;
+						return retVal;
 					};
 					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
 				};
@@ -74,6 +127,14 @@ function alias() {
 			return this;
 		}
 	};
-
+	
 	return new Alias(arguments); 
 };
+
+// TODO
+// - allow objects to be passed in as well as strings to withScope(), alias() & as()
+// - allow before filters to modify the incoming arguments somehow
+// - allow after filters to modify the return value somehow
+// - add a revert() method to revert back to the non aliased version, involves tracking function creations and renames
+// - add a once() method to automatically revert() after the first invocation of a function is complete
+// - add beforeFirst() and afterFirst() to support filters on the first invocation of a function

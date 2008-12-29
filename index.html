@@ -36,7 +36,7 @@
   demo3();
   
   // As aliases are evaluated on the fly you can define new ones at runtime. 
-  // This is a very contrived example but it can be useful for defering and/or caching conditional logic.
+  // This is a very contrived example but in practice it can be useful for defering and/or caching conditional logic.
   function login(password) {
     if(password=='secrets')
       alias('authenticated').as('login');
@@ -49,6 +49,15 @@
   
   login('secrets');
   
+  // filters allow for wrapping additional functionality around existing functions
+  // they can be handy for modifing external libraries
+  myLib = { demo: function() { console.log('hello from my filtered library') } };
+  function myBeforeFilter() { console.log("I'm a before filter") };  
+  function myHaltingBeforeFilter() { console.log("I halted the filter chain"); throw('halt') };  
+  alias('demo').withScope(myLib).beforeEach(myBeforeFilter).as('demo');
+  alias('demo').withScope(myLib).beforeAll(myHaltingBeforeFilter).as('demo2');
+  myLib.demo()
+  myLib.demo2()
   </script>
 
 </head>
