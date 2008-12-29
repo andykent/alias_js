@@ -10,21 +10,29 @@
   <script src="alias.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
 
+
+
+
   // Time delays, scoping and chained dispatch are all fully supported.
+  
   var d = {
     a: function() { console.log('hello from a') },
-    b: function(func, msg) { console.log(msg+' - was sent from '+func) }
+    b: function(func, msg) { console.log(msg+' - was sent from '+func+' via b') }
   };
 
   alias('a', 'b')
-  .withSourceScope(d)
-  .as('c', 'd', 'e')
-  .withNamedCaller()
-  .delayBy(1000)
+    .withSourceScope(d)
+    .as('c', 'd', 'e')
+    .withNamedCaller()
+    .delayBy(1000);
 
   c('hello from c');
 
+
+
+
   // You can build multi-step function chains and even define the chain before defining the source function, great for meta-programming.
+  
   alias('demo').as('demo1');
   alias('demo1').as('demo2');
   alias('demo2').as('demo3');
@@ -33,8 +41,12 @@
 
   demo3();
   
+  
+  
+  
   // As aliases are evaluated on the fly you can define new ones at runtime. 
   // This is a very contrived example but in practice it can be useful for defering and/or caching conditional logic.
+  
   function login(password) {
     if(password=='secrets')
       alias('authenticated').as('login');
@@ -47,16 +59,33 @@
   
   login('secrets');
   
+  
+  
+  
   // filters allow for wrapping additional functionality around existing functions
   // they can be handy for modifing external libraries
+  
   myLib = { demo: function() { console.log('hello from my filtered library') } };
   function myBeforeFilter() { console.log("I'm a before filter") };  
   function myHaltingBeforeFilter() { console.log("I halted the filter chain"); throw('halt') };  
-  alias('demo').withScope(myLib).beforeEach(myBeforeFilter).as('demo');
-  alias('demo').withScope(myLib).beforeAll(myHaltingBeforeFilter).as('demo2');
+  alias('demo')
+    .withScope(myLib)
+    .beforeEach(myBeforeFilter)
+    .as('demo');
+  
+  alias('demo')
+    .withScope(myLib)
+    .beforeAll(myHaltingBeforeFilter)
+    .as('demo2');
+  
   myLib.demo();
   myLib.demo2();
-  alias('demo').withScope(myLib).beforeEach(myBeforeFilter).as('demo');
+  
+  alias('demo')
+    .withScope(myLib)
+    .beforeEach(myBeforeFilter)
+    .as('demo');
+  
   myLib.demo();
   </script>
 
