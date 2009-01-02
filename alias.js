@@ -30,6 +30,7 @@ function alias() {
 		afterEachFilters: [],
 		beforeAllFilters: [],
 		afterAllFilters: [],
+		history: [],
 
 		as: function() {
 			this.destinations = arguments;
@@ -72,8 +73,63 @@ function alias() {
 			this.afterAllFilters.push(func);
 			return this;
 		},
+
+		apply: function() {
+			var a = this;
+			var applyToDestination = function(dest) {
+				var destinationFunction = a.destinationScope[dest]
+				if(destinationFunction) { // we are about to do an overwrite so check for infinate loops!
+					for (var sc=0; sc < a.sources.length; sc++) {
+						var sourceFunction = a.sourceScope[a.sources[sc]];
+						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
+							a.sources[sc] = '___'+a.sources[sc]+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
+							a.sourceScope[a.sources[sc]] = sourceFunction;
+							a._track(a.sourceScope[a.sources[sc]], sourceFunction, a.sourceScope[a.sources[sc]]);
+						};
+					};
+				};
+				a.destinationScope[dest] = function() {
+					if (a.includeFunctionName) {
+						var args = [dest];
+						for (var arg=0; arg < arguments.length; arg++) {
+							args.push(arguments[arg]);
+						};
+					} else var args = arguments;
+					
+					var execute = function() {
+						if(!(args = a._runFilters(a.beforeAllFilters, a.sourceScope, args))) return;
+						for (var sc=0; sc < a.sources.length; sc++) {
+							if(!(args = a._runFilters(a.beforeEachFilters, a.sourceScope, args))) return;
+							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
+							if(!(args = a._runFilters(a.afterEachFilters, a.sourceScope, args))) return;
+						};
+						if(!(args = a._runFilters(a.afterAllFilters, a.sourceScope, args))) return;
+						return retVal;
+					};
+					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
+				};
+				a._track(a.destinationScope[dest], null, a.destinationScope[dest]);
+			};
+
+			for (var d=0; d < a.destinations.length; d++) {
+				applyToDestination(a.destinations[d]);
+			};
+			return this;
+		},
 		
-		runFilters: function(filters, scope, args) {
+		revert: function(){
+			for(var h=0; h<this.history.length; h++) {
+				var hist = this.history[h];
+				if(hist['from']) hist['from'] = hist['func'];
+				if(hist['to']) hist['to'] = undefined;
+			};
+			this.history = [];
+		},
+		
+		
+		// - Private -
+		
+		_runFilters: function(filters, scope, args) {
 			for(var f=0; f < filters.length; f++) {
 				try {
 					var retVal = filters[f].apply(scope, args);
@@ -87,47 +143,10 @@ function alias() {
 			};
 			return args;
 		},
-
-		apply: function() {
-			var a = this;
-			var applyToDestination = function(dest) {
-				var destinationFunction = a.destinationScope[dest]
-				if(destinationFunction) { // we are about to do an overwrite so check for infinate loops!
-					for (var sc=0; sc < a.sources.length; sc++) {
-						var sourceFunction = a.sourceScope[a.sources[sc]];
-						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
-							a.sources[sc] = '___'+a.sources[sc]+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
-							a.sourceScope[a.sources[sc]] = sourceFunction;
-						}
-					};
-				};
-				a.destinationScope[dest] = function() {
-					if (a.includeFunctionName) {
-						var args = [dest];
-						for (var arg=0; arg < arguments.length; arg++) {
-							args.push(arguments[arg]);
-						};
-					} else var args = arguments;
-					
-					var execute = function() {
-						if(!(args = a.runFilters(a.beforeAllFilters, a.sourceScope, args))) return;
-						for (var sc=0; sc < a.sources.length; sc++) {
-							if(!(args = a.runFilters(a.beforeEachFilters, a.sourceScope, args))) return;
-							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
-							if(!(args = a.runFilters(a.afterEachFilters, a.sourceScope, args))) return;
-						};
-						if(!(args = a.runFilters(a.afterAllFilters, a.sourceScope, args))) return;
-						return retVal;
-					};
-					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
-				};
-			};
-
-			for (var d=0; d < a.destinations.length; d++) {
-				applyToDestination(a.destinations[d]);
-			};
-			return this;
-		}
+		
+		_track: function(obj, before, after) {
+			this.history.unshift({ func:obj, from:before, to:after });
+		},
 	};
 	
 	return new Alias(arguments); 

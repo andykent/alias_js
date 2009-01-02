@@ -95,10 +95,13 @@
   
   function base(a, b) { console.log('Base received a='+a+' b='+b) };
   function modifyFilter(a, b) { return [a+1, b*10] };
-  alias('base')
+  var rd = alias('base')
     .beforeEach(modifyFilter)
     .as('base');
     
+  base(1, 5);
+  
+  rd.revert();
   base(1, 5);
    
   </script>
