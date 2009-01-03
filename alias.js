@@ -106,17 +106,17 @@ function alias() {
 					} else var args = arguments;
 					
 					var execute = function() {
-						if(!(args = a._runFilters(a.beforeAllFilters, a.sourceScope, args))) return;
+						if(!(args = a._runFilters('before', a.beforeAllFilters, a.sourceScope, args))) return;
 						for (var sc=0; sc < a.sources.length; sc++) {
-							if(!(args = a._runFilters(a.beforeEachFilters, a.sourceScope, args))) return;
+							if(!(args = a._runFilters('before', a.beforeEachFilters, a.sourceScope, args))) return;
 							a.baseCallCount++;
 							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
-							if(!(args = a._runFilters(a.afterEachFilters, a.sourceScope, args))) return;
+							if(!(retVal = a._runFilters('after', a.afterEachFilters, a.sourceScope, [retVal]))) return;
 						};
-						if(!(args = a._runFilters(a.afterAllFilters, a.sourceScope, args))) return;
+						if(!(retVal = a._runFilters('after', a.afterAllFilters, a.sourceScope, [retVal]))) return;
 						return retVal;
 					};
-					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
+					return a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
 				};
 				a._undo(function() { a.destinationScope[dest] = undefined; });
 			};
@@ -157,11 +157,11 @@ function alias() {
 			this.history = [];
 		},
 		
-		_runFilters: function(filters, scope, args) {
+		_runFilters: function(type, filters, scope, args) {
 			for(var f=0; f < filters.length; f++) {
 				try {
 					var retVal = filters[f].apply(scope, args);
-					args = retVal || args;
+					args = retVal || (type=='before' ? args : args[0]);
 				} catch(e) {
 					if(e=='halt') {
 						args = false; 
@@ -182,4 +182,3 @@ function alias() {
 
 // TODO
 // - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
-// - allow after filters to modify the return value somehow instead of modifying the arguments as that is a bit pointless

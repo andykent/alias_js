@@ -64,14 +64,20 @@
   
   // filters allow for wrapping additional functionality around existing functions
   // they can be handy for modifing external libraries
+  // before filters get the original arguments passed in, after filters get the return value
   
-  myLib = { demo: function() { console.log('hello from my filtered library') } };
-  function myBeforeFilter() { console.log("I'm a before filter") };  
+  myLib = { demo: function() { console.log('hello from my filtered library'); return "hello"; } };
+  function myBeforeFilter() { console.log("I'm a before filter") }; 
+  function myAfterFilter(ret) { return "I got: "+ret }; 
   function myHaltingBeforeFilter() { console.log("I halted the filter chain"); throw('halt') };  
+  
   alias('demo')
     .withScope(myLib)
     .beforeEach(myBeforeFilter)
+    .afterAll(myAfterFilter)
     .as('demo');
+
+  console.log(myLib.demo());
   
   alias('demo')
     .withScope(myLib)
@@ -81,17 +87,11 @@
   myLib.demo();
   myLib.demo2();
   
-  alias('demo')
-    .withScope(myLib)
-    .beforeEach(myBeforeFilter)
-    .as('demo');
-  
-  myLib.demo();
   
   
-  
-  // filters can even modify the arguments that are being passed in by returning an array. 
-  // if you don't wish to modify the arguments then simply don't return anything.
+  // before filters can modify the arguments that are being passed in by returning an array.
+  // after filters can modify the return value by returning anything.
+  // if you don't wish to modify the arguments or return value then simply don't return anything.
   
   function base(a, b) { console.log('Base received a='+a+' b='+b) };
   function modifyFilter(a, b) { return [a+1, b*10] };
