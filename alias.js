@@ -21,7 +21,7 @@ function alias() {
 	var Alias = function(sources) {
 		this.withScope(scope, scope);
 		this.sources = sources;
-	}
+	};
 
 	Alias.prototype = {
 		destinationScope: null,
@@ -82,7 +82,7 @@ function alias() {
 		apply: function() {
 			var a = this;
 			var applyToDestination = function(dest) {
-				var destinationFunction = a.destinationScope[dest]
+				var destinationFunction = a.destinationScope[dest];
 				if(destinationFunction) { // we are about to do an overwrite so check for infinate loops!
 					for (var sc=0; sc < a.sources.length; sc++) {
 						var sourceFunction = a.sourceScope[a.sources[sc]];
@@ -94,16 +94,16 @@ function alias() {
 								a.sourceScope[a.sources[sc]] = undefined;
 								a.sourceScope[originalSource] = sourceFunction;
 							});
-						};
-					};
-				};
+						}
+					}
+				}
 				a.destinationScope[dest] = function() {
 					if (a.includeFunctionName) {
 						var args = [dest];
 						for (var arg=0; arg < arguments.length; arg++) {
 							args.push(arguments[arg]);
-						};
-					} else var args = arguments;
+						}
+					} else { var args = arguments; }
 					
 					var execute = function() {
 						if(!(args = a._runFilters('before', a.beforeAllFilters, a.sourceScope, args))) return;
@@ -112,11 +112,11 @@ function alias() {
 							a.baseCallCount++;
 							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
 							if(!(retVal = a._runFilters('after', a.afterEachFilters, a.sourceScope, [retVal]))) return;
-						};
+						}
 						if(!(retVal = a._runFilters('after', a.afterAllFilters, a.sourceScope, [retVal]))) return;
 						return retVal;
 					};
-					return a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
+					return a.delayPeriod ? window.setTimeout(execute, a.delayPeriod) : execute();
 				};
 				a._undo(function() { a.destinationScope[dest] = undefined; });
 			};
@@ -133,7 +133,7 @@ function alias() {
 				this.afterAll(function() { if(a.callCount()==times) a._doRevert(); });
 			} else {
 				this._doRevert();
-			};
+			}
 			return this;
 		},
 		
@@ -153,7 +153,7 @@ function alias() {
 		// - Private -
 		
 		_doRevert: function(){
-			for(var h=0; h<this.history.length; h++) { this.history[h](); };
+			for(var h=0; h<this.history.length; h++) { this.history[h](); }
 			this.history = [];
 		},
 		
@@ -168,7 +168,7 @@ function alias() {
 						break;
 					} else throw(e);
 				}
-			};
+			}
 			return args;
 		},
 		
@@ -178,7 +178,7 @@ function alias() {
 	};
 	
 	return new Alias(arguments); 
-};
+}
 
 // TODO
 // - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
