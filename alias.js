@@ -11,6 +11,10 @@
 // -> calls to b() are redirected to a() after a 1 second delay
 // alias('a').withScope(myLib).beforeEach(myBeforeFilter).as('a');
 // -> calls will be passed to the original function but a filter will be run before each invocation
+// alias('a').as('b').once();
+// -> the first call to b() is redirected to a() after which the call chain is reverted back to normal
+// alias('a').beforeFilter(myFunc).as('a');
+// -> myFunc(args) is called before every call to a()
 
 function alias() {
 	var scope = this;
