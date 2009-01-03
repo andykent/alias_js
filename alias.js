@@ -137,18 +137,14 @@ function alias() {
 			return this;
 		},
 		
-		callCount: function() {
-			return this.baseCallCount;
-		},
+		callCount: function() { return this.baseCallCount; },
 		
 		resetCallCount: function() {
 			this.baseCallCount = 0;
 			return this;
 		},
 		
-		once: function() {
-			return this.revert(1);
-		},
+		once: function() { return this.revert(1); },
 		
 		// - Private -
 		
@@ -172,9 +168,7 @@ function alias() {
 			return args;
 		},
 		
-		_undo: function(func) {
-			this.history.unshift(func);
-		}
+		_undo: function(func) { this.history.unshift(func); }
 	};
 	
 	return new Alias(arguments); 
