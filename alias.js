@@ -82,9 +82,13 @@ function alias() {
 					for (var sc=0; sc < a.sources.length; sc++) {
 						var sourceFunction = a.sourceScope[a.sources[sc]];
 						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
-							a.sources[sc] = '___'+a.sources[sc]+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
+							var originalSource = a.sources[sc];
+							a.sources[sc] = '___'+originalSource+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
 							a.sourceScope[a.sources[sc]] = sourceFunction;
-							a._track(a.sourceScope[a.sources[sc]], sourceFunction, a.sourceScope[a.sources[sc]]);
+							a._undo(function() {
+								a.sourceScope[a.sources[sc]] = undefined;
+								a.sourceScope[originalSource] = sourceFunction;
+							});
 						};
 					};
 				};
@@ -108,7 +112,7 @@ function alias() {
 					};
 					a.delayPeriod ? setTimeout(execute, a.delayPeriod) : execute();
 				};
-				a._track(a.destinationScope[dest], null, a.destinationScope[dest]);
+				a._undo(function() { a.destinationScope[dest] = undefined; });
 			};
 
 			for (var d=0; d < a.destinations.length; d++) {
@@ -118,11 +122,7 @@ function alias() {
 		},
 		
 		revert: function(){
-			for(var h=0; h<this.history.length; h++) {
-				var hist = this.history[h];
-				if(hist['from']) hist['from'] = hist['func'];
-				if(hist['to']) hist['to'] = undefined;
-			};
+			for(var h=0; h<this.history.length; h++) { this.history[h](); };
 			this.history = [];
 		},
 		
@@ -144,8 +144,8 @@ function alias() {
 			return args;
 		},
 		
-		_track: function(obj, before, after) {
-			this.history.unshift({ func:obj, from:before, to:after });
+		_undo: function(func) {
+			this.history.unshift(func);
 		},
 	};
 	
@@ -155,6 +155,5 @@ function alias() {
 // TODO
 // - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
 // - allow after filters to modify the return value somehow instead of modifying the arguments as that is a bit pointless
-// - add a revert() method to revert back to the non aliased version, involves tracking function creations and renames
 // - add a once() method to automatically revert() after the first invocation of a function is complete
 // - add beforeFirst() and afterFirst() to support filters on the first invocation of a function
