@@ -100,10 +100,26 @@
     .as('base');
     
   base(1, 5);
+  console.log(rd.callCount());
+  
+  
+  // Revert can be used to reset the call stack and remove all aliases applied.
+  // if a number is passed in then the revert will happen after n calls.
   
   rd.revert();
+  base(1, 5);
+  
+  // The once() function is a handy shortcut for revert(1);
+  // the chain will be reverted after the first call and execution can continue as normal
+
+  var rd = alias('base')
+    .beforeEach(modifyFilter)
+    .as('base')
+    .once();
   
   base(1, 5);
+  base(1, 5);
+  
    
   </script>
 

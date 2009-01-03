@@ -31,6 +31,7 @@ function alias() {
 		beforeAllFilters: [],
 		afterAllFilters: [],
 		history: [],
+		baseCallCount: 0,
 
 		as: function() {
 			this.destinations = arguments;
@@ -104,6 +105,7 @@ function alias() {
 						if(!(args = a._runFilters(a.beforeAllFilters, a.sourceScope, args))) return;
 						for (var sc=0; sc < a.sources.length; sc++) {
 							if(!(args = a._runFilters(a.beforeEachFilters, a.sourceScope, args))) return;
+							a.baseCallCount++;
 							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
 							if(!(args = a._runFilters(a.afterEachFilters, a.sourceScope, args))) return;
 						};
@@ -121,13 +123,35 @@ function alias() {
 			return this;
 		},
 		
-		revert: function(){
+		revert: function(times){
+			if(times) {
+				var a = this;
+				this.afterAll(function() { if(a.callCount()==times) a._doRevert(); });
+			} else {
+				this._doRevert();
+			};
+			return this;
+		},
+		
+		callCount: function() {
+			return this.baseCallCount;
+		},
+		
+		resetCallCount: function() {
+			this.baseCallCount = 0;
+			return this;
+		},
+		
+		once: function() {
+			return this.revert(1);
+		},
+		
+		// - Private -
+		
+		_doRevert: function(){
 			for(var h=0; h<this.history.length; h++) { this.history[h](); };
 			this.history = [];
 		},
-		
-		
-		// - Private -
 		
 		_runFilters: function(filters, scope, args) {
 			for(var f=0; f < filters.length; f++) {
@@ -146,7 +170,7 @@ function alias() {
 		
 		_undo: function(func) {
 			this.history.unshift(func);
-		},
+		}
 	};
 	
 	return new Alias(arguments); 
@@ -155,5 +179,3 @@ function alias() {
 // TODO
 // - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
 // - allow after filters to modify the return value somehow instead of modifying the arguments as that is a bit pointless
-// - add a once() method to automatically revert() after the first invocation of a function is complete
-// - add beforeFirst() and afterFirst() to support filters on the first invocation of a function
