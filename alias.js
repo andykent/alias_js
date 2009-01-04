@@ -97,7 +97,7 @@ function alias() {
 						}
 					}
 				}
-				a.destinationScope[dest] = function() {
+				a.destinationScope[dest] = function() { // start of aliased function
 					if (a.includeFunctionName) {
 						var args = [dest];
 						for (var arg=0; arg < arguments.length; arg++) {
@@ -117,7 +117,8 @@ function alias() {
 						return retVal;
 					};
 					return a.delayPeriod ? window.setTimeout(execute, a.delayPeriod) : execute();
-				};
+				}; // end of aliased function
+				
 				a._undo(function() { a.destinationScope[dest] = undefined; });
 			};
 
@@ -147,6 +148,13 @@ function alias() {
 		once: function() { return this.revert(1); },
 		
 		// - Private -
+		
+		_fetchObject: function(scope, ref) {
+			if(scope typeof 'string') scope = this._findObject(window, scope);
+			if(ref typeof 'string') {
+				var obj = scope[ref];
+			} else return ref;
+		},
 		
 		_doRevert: function(){
 			for(var h=0; h<this.history.length; h++) { this.history[h](); }
