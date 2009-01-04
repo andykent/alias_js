@@ -108,20 +108,20 @@ function alias() {
 					} else { var args = arguments; }
 					
 					var execute = function() {
+						a.baseCallCount++;
 						if(!(args = a._runFilters('before', a.beforeAllFilters, a.sourceScope, args))) return;
 						for (var sc=0; sc < a.sources.length; sc++) {
 							if(!(args = a._runFilters('before', a.beforeEachFilters, a.sourceScope, args))) return;
-							a.baseCallCount++;
 							var retVal = a._getObject(a.sourceScope, a.sources[sc]).apply(a.sourceScope, args);
 							if(!(retVal = a._runFilters('after', a.afterEachFilters, a.sourceScope, [retVal]))) return;
-						}
+						}	
 						if(!(retVal = a._runFilters('after', a.afterAllFilters, a.sourceScope, [retVal]))) return;
 						return retVal;
 					};
 					return a.delayPeriod ? window.setTimeout(execute, a.delayPeriod) : execute();
 				}); // end of aliased function
 				
-				a._undo(function() { a._setObject(a.destinationScope, dest, undefined); });
+				a._undo(function() { a._setObject(a.destinationScope, dest, undefined) });
 			};
 
 			for (var d=0; d < a.destinations.length; d++) {
@@ -206,7 +206,7 @@ function alias() {
 }
 
 // TODO
-// - make revert() work correctly with dot syntax
+// - fix revert on chained aliases
 // - tidy up scoping
 // - make scoping dot syntax work for filters too so you can pass filters in as string pointers
 // - allow a dot at the start to mean from root rather than current scope??

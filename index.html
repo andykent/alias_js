@@ -138,9 +138,9 @@
   // you can use dot syntax to target functions across different scopes too.
   var scope1 = { func: function(){ console.log('scope1 method') }};
   var scope2 = { func: function(){ console.log('scope2 method') }};
-  alias('scope1.func', 'scope2.func').as('func').once();
-  func();
-  
+  alias('scope1.func', 'scope2.func').as('scope1.func').once();
+  scope1.func();
+  scope1.func();
    
   </script>
 
