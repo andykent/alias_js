@@ -22,6 +22,8 @@ function alias() {
 		this.withScope(scope, scope);
 		this.sources = sources;
 	};
+	
+	Alias.globalScope = window; // assume we are in a browser and so set the global scope to be the window object.
 
 	Alias.prototype = {
 		destinationScope: null,
@@ -82,22 +84,22 @@ function alias() {
 		apply: function() {
 			var a = this;
 			var applyToDestination = function(dest) {
-				var destinationFunction = a.destinationScope[dest];
+				var destinationFunction = a._getObject(a.destinationScope, dest);
 				if(destinationFunction) { // we are about to do an overwrite so check for infinate loops!
 					for (var sc=0; sc < a.sources.length; sc++) {
-						var sourceFunction = a.sourceScope[a.sources[sc]];
+						var sourceFunction = a._getObject(a.sourceScope, a.sources[sc]);
 						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
 							var originalSource = a.sources[sc];
-							a.sources[sc] = '___'+originalSource+'_'+Math.random(9999999)+'___'; // add a random element to help ensure uniqueness
-							a.sourceScope[a.sources[sc]] = sourceFunction;
+							a.sources[sc] = '___'+originalSource+'_alias_'+Math.floor(Math.random()*999999)+'___'; // add a random element to help ensure uniqueness
+							a._setObject(a.sourceScope, a.sources[sc], sourceFunction);
 							a._undo(function() {
-								a.sourceScope[a.sources[sc]] = undefined;
-								a.sourceScope[originalSource] = sourceFunction;
+								a._setObject(a.sourceScope, a.sources[sc], undefined);
+								a._setObject(a.sourceScope, originalSource, sourceFunction);
 							});
 						}
 					}
 				}
-				a.destinationScope[dest] = function() { // start of aliased function
+				a._setObject(a.destinationScope, dest, function() { // start of aliased function
 					if (a.includeFunctionName) {
 						var args = [dest];
 						for (var arg=0; arg < arguments.length; arg++) {
@@ -110,16 +112,16 @@ function alias() {
 						for (var sc=0; sc < a.sources.length; sc++) {
 							if(!(args = a._runFilters('before', a.beforeEachFilters, a.sourceScope, args))) return;
 							a.baseCallCount++;
-							var retVal = a.sourceScope[a.sources[sc]].apply(a.sourceScope, args);
+							var retVal = a._getObject(a.sourceScope, a.sources[sc]).apply(a.sourceScope, args);
 							if(!(retVal = a._runFilters('after', a.afterEachFilters, a.sourceScope, [retVal]))) return;
 						}
 						if(!(retVal = a._runFilters('after', a.afterAllFilters, a.sourceScope, [retVal]))) return;
 						return retVal;
 					};
 					return a.delayPeriod ? window.setTimeout(execute, a.delayPeriod) : execute();
-				}; // end of aliased function
+				}); // end of aliased function
 				
-				a._undo(function() { a.destinationScope[dest] = undefined; });
+				a._undo(function() { a._setObject(a.destinationScope, dest, undefined); });
 			};
 
 			for (var d=0; d < a.destinations.length; d++) {
@@ -149,11 +151,32 @@ function alias() {
 		
 		// - Private -
 		
-		_fetchObject: function(scope, ref) {
-			if(scope typeof 'string') scope = this._findObject(window, scope);
-			if(ref typeof 'string') {
-				var obj = scope[ref];
-			} else return ref;
+		_getObject: function(scope, ref) {
+			try {
+				if(typeof scope == 'string') scope = this._getObject(Alias.globalScope, scope);
+				if(typeof ref == 'string') {
+					var refs = ref.split('.');
+					for(var i=0; i<refs.length; i++) { scope = scope[refs[i]]; };
+					ref = scope;
+				}
+				return ref;
+			} catch(e) {
+				return undefined;
+			}
+		},
+		
+		_setObject: function(scope, ref, val) {
+			if(typeof scope == 'string') scope = this._getObject(Alias.globalScope, scope); 
+			if(typeof ref == 'string') {
+				var refs = ref.split('.');
+				for(var i=0; i<refs.length; i++) {
+					if(i!=refs.length-1) {
+						if(scope[refs[i]]==undefined)	scope[refs[i]] = function() {}; // use empty function so we get a pointer to undefined objects
+						scope = scope[refs[i]];
+					} else scope[refs[i]] = val;
+				}
+			} else ref = val;
+			return val;
 		},
 		
 		_doRevert: function(){
@@ -164,7 +187,7 @@ function alias() {
 		_runFilters: function(type, filters, scope, args) {
 			for(var f=0; f < filters.length; f++) {
 				try {
-					var retVal = filters[f].apply(scope, args);
+					var retVal = filters[f].apply(this._getObject(Alias.globalScope, scope), args); 
 					args = retVal || (type=='before' ? args : args[0]);
 				} catch(e) {
 					if(e=='halt') {
@@ -183,4 +206,8 @@ function alias() {
 }
 
 // TODO
-// - allow objects to be passed in as well as strings to withScope(), alias() & as(), this is hard as we need to extract the scope too.
+// - make revert() work correctly with dot syntax
+// - tidy up scoping
+// - make scoping dot syntax work for filters too so you can pass filters in as string pointers
+// - allow a dot at the start to mean from root rather than current scope??
+// - decide what should be returned from a chained alias, eg alias('a', 'b').as('c'); c() -> undefined

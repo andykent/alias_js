@@ -120,6 +120,27 @@
   base(1, 5);
   base(1, 5);
   
+  
+  
+  // in most places strings and pointers are interchangeable.
+  // strings are evaluatd just in time though so aliases can be setup in advance of definitions
+  
+  alias('jit').withSourceScope('jitScope').as('jit').once();
+  var jitScope = { jit: function() { console.log('I got assigned just in time!')} };
+  jit();
+  
+  
+  // withSourceScope is a bit long winded. why not try using dot syntax instead!
+  // note this even works for destination objects that don't exist like newScope.jit in this example
+  alias('jitScope.jit').as('newScope.jit').once();
+  newScope.jit();
+  
+  // you can use dot syntax to target functions across different scopes too.
+  var scope1 = { func: function(){ console.log('scope1 method') }};
+  var scope2 = { func: function(){ console.log('scope2 method') }};
+  alias('scope1.func', 'scope2.func').as('func').once();
+  func();
+  
    
   </script>
 
