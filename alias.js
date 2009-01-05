@@ -207,6 +207,7 @@ function alias() {
 }
 
 // TODO
+// - fix revert() to work with alias(a.b, a.c).as('a.b'); the issue only happens with objects, not strings
 // - tidy up scoping
 // - make scoping dot syntax work for filters too so you can pass filters in as string pointers
 // - allow a dot at the start to mean from root rather than current scope??
