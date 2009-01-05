@@ -90,11 +90,12 @@ function alias() {
 						var sourceFunction = a._getObject(a.sourceScope, a.sources[sc]);
 						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
 							var originalSource = a.sources[sc];
-							a.sources[sc] = '___'+originalSource+'_alias_'+Math.floor(Math.random()*999999)+'___'; // add a random element to help ensure uniqueness
+							var source = a.sources[sc] = '___'+originalSource.replace('.', '_')+'_alias_'+Math.floor(Math.random()*999999)+'___'; // add a random element to help ensure uniqueness
 							a._setObject(a.sourceScope, a.sources[sc], sourceFunction);
+							var sourceFunctionForUndo = sourceFunction;
 							a._undo(function() {
-								a._setObject(a.sourceScope, a.sources[sc], undefined);
-								a._setObject(a.sourceScope, originalSource, sourceFunction);
+								a._setObject(a.sourceScope, source, undefined);
+								a._setObject(a.sourceScope, originalSource, sourceFunctionForUndo);
 							});
 						}
 					}
@@ -206,7 +207,6 @@ function alias() {
 }
 
 // TODO
-// - fix revert on chained aliases
 // - tidy up scoping
 // - make scoping dot syntax work for filters too so you can pass filters in as string pointers
 // - allow a dot at the start to mean from root rather than current scope??
