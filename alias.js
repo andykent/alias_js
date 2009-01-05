@@ -90,7 +90,7 @@ function alias() {
 						var sourceFunction = a._getObject(a.sourceScope, a.sources[sc]);
 						if(sourceFunction==destinationFunction) { // potential infinate loop found, lets move the source function
 							var originalSource = a.sources[sc];
-							var source = a.sources[sc] = '___'+originalSource.replace('.', '_')+'_alias_'+Math.floor(Math.random()*999999)+'___'; // add a random element to help ensure uniqueness
+							var source = a.sources[sc] = '___alias_'+Math.floor(Math.random()*999999)+'___'; // add a random element to help ensure uniqueness
 							a._setObject(a.sourceScope, a.sources[sc], sourceFunction);
 							var sourceFunctionForUndo = sourceFunction;
 							a._undo(function() {
